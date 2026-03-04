@@ -382,6 +382,7 @@ upsert_env "$ENV_FILE" \
   OPENCLAW_DOCKER_SOCKET \
   DOCKER_GID \
   OPENCLAW_INSTALL_DOCKER_CLI \
+  OPENCLAW_INSTALL_BREW_CLI \
   OPENCLAW_ALLOW_INSECURE_PRIVATE_WS
 
 if [[ "$IMAGE_NAME" == "openclaw:local" ]]; then
@@ -389,6 +390,7 @@ if [[ "$IMAGE_NAME" == "openclaw:local" ]]; then
   docker build \
     --build-arg "OPENCLAW_DOCKER_APT_PACKAGES=${OPENCLAW_DOCKER_APT_PACKAGES}" \
     --build-arg "OPENCLAW_INSTALL_DOCKER_CLI=${OPENCLAW_INSTALL_DOCKER_CLI:-}" \
+    --build-arg "OPENCLAW_INSTALL_BREW_CLI=${OPENCLAW_INSTALL_BREW_CLI:-}" \
     -t "$IMAGE_NAME" \
     -f "$ROOT_DIR/Dockerfile" \
     "$ROOT_DIR"

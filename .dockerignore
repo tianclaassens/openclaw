@@ -1,5 +1,10 @@
 .git
 .worktrees
+.mailmap
+.github
+.cursor
+docs
+**/docs
 .bun-cache
 .bun
 .tmp

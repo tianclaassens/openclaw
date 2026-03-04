@@ -1,5 +1,9 @@
 FROM node:22-bookworm@sha256:cd7bcd2e7a1e6f72052feb023c7f6b722205d3fcab7bbcbd2d1bfdab10b1e935
 
+# Layer order for cache: deps and lockfile first (COPY package*.json + pnpm install), then optional
+# tooling (browser, docker CLI, brew/clawhub), then full source (COPY . .) and build. Changing app
+# source only invalidates from COPY . . onward; changing deps invalidates from the first COPY.
+
 # OCI base-image metadata for downstream image consumers.
 # If you change these annotations, also update:
 # - docs/install/docker.md ("Base image metadata" section)
@@ -88,6 +92,34 @@ RUN if [ -n "$OPENCLAW_INSTALL_DOCKER_CLI" ]; then \
       apt-get clean && \
       rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*; \
     fi
+
+# Optionally install Homebrew (Linuxbrew), openai-whisper (incl. ffmpeg), ClawHub CLI, and himalaya.
+# Build with: docker build --build-arg OPENCLAW_INSTALL_BREW_CLI=1 ...
+# Adds ~200MB+. Provides: brew, whisper, himalaya, clawhub.
+ARG OPENCLAW_INSTALL_BREW_CLI=""
+ARG OPENCLAW_BREW_INSTALL_DIR="/home/linuxbrew/.linuxbrew"
+RUN if [ -n "$OPENCLAW_INSTALL_BREW_CLI" ]; then \
+      apt-get update && \
+      DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        ca-certificates curl file git procps build-essential && \
+      (id -u linuxbrew >/dev/null 2>&1 || useradd -m -s /bin/bash linuxbrew) && \
+      mkdir -p "${OPENCLAW_BREW_INSTALL_DIR}" && \
+      chown -R linuxbrew:linuxbrew "$(dirname "${OPENCLAW_BREW_INSTALL_DIR}")" && \
+      su - linuxbrew -c "NONINTERACTIVE=1 CI=1 /bin/bash -c '$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)'" && \
+      if [ ! -e "${OPENCLAW_BREW_INSTALL_DIR}/Library" ]; then ln -s "${OPENCLAW_BREW_INSTALL_DIR}/Homebrew/Library" "${OPENCLAW_BREW_INSTALL_DIR}/Library"; fi && \
+      ln -sf "${OPENCLAW_BREW_INSTALL_DIR}/bin/brew" /usr/local/bin/brew && \
+      su - linuxbrew -c "eval \"\$(${OPENCLAW_BREW_INSTALL_DIR}/bin/brew shellenv)\" && brew install openai-whisper himalaya" && \
+      apt-get clean && \
+      rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*; \
+    fi
+# ClawHub CLI in separate layer so transient npm registry timeouts don't force a full brew rebuild.
+RUN if [ -n "$OPENCLAW_INSTALL_BREW_CLI" ]; then \
+      npm config set fetch-timeout 120000 && \
+      npm config set fetch-retries 5 && \
+      npm install -g clawhub; \
+    fi
+# Ensure Homebrew bin/sbin on PATH when OPENCLAW_INSTALL_BREW_CLI was used (harmless if not).
+ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}"
 
 USER node
 COPY --chown=node:node . .
