@@ -139,9 +139,17 @@ RUN pnpm ui:build
 # Expose the CLI binary without requiring npm global writes as non-root.
 USER root
 RUN ln -sf /app/openclaw.mjs /usr/local/bin/openclaw \
- && chmod 755 /app/openclaw.mjs
+ && chmod 755 /app/openclaw.mjs \
+ && mkdir -p /home/node/.config /home/node/.openclaw /home/node/.config/clawhub \
+ && chown -R node:node /home/node/.config /home/node/.openclaw
 
 ENV NODE_ENV=production
+
+# Documented ports:
+# - 18789: OpenClaw gateway
+# - 18790: OpenClaw bridge
+# - 18791: Browser control service
+EXPOSE 18789 18790 18791
 
 # Security hardening: Run as non-root user
 # The node:22-bookworm image includes a 'node' user (uid 1000)
