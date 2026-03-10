@@ -81,7 +81,8 @@ RUN if [ -n "$OPENCLAW_INSTALL_BREW_CLI" ]; then \
 RUN if [ -n "$OPENCLAW_INSTALL_BREW_CLI" ]; then \
       npm install -g clawhub; \
     fi
-ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}"
+# /home/node/.local/bin so pip-installed whisper (e.g. pip install --user) is found when gateway runs as node.
+ENV PATH="/home/node/.local/bin:/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:/usr/local/bin:${PATH}"
 
 USER node
 COPY --chown=node:node . .
