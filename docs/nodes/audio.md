@@ -136,7 +136,7 @@ Note: Binary detection is best-effort across macOS/Linux/Windows; ensure the CLI
 - Default size cap is 20MB (`tools.media.audio.maxBytes`). Oversize audio is skipped for that model and the next entry is tried.
 - Tiny/empty audio files below 1024 bytes are skipped before provider/CLI transcription.
 - Default `maxChars` for audio is **unset** (full transcript). Set `tools.media.audio.maxChars` or per-entry `maxChars` to trim output.
-- OpenAI auto default is `gpt-4o-mini-transcribe`; set `model: "gpt-4o-transcribe"` for higher accuracy.
+- OpenAI auto default is `gpt-4o-mini-transcribe`; set `model: "gpt-4o-transcribe"` for higher accuracy. You can use the **Whisper API** by setting `model: "whisper-1"` in an OpenAI entry (same provider, same auth; preflight and normal transcription both use it).
 - Use `tools.media.audio.attachments` to process multiple voice notes (`mode: "all"` + `maxAttachments`).
 - Transcript is available to templates as `{{Transcript}}`.
 - `tools.media.audio.echoTranscript` is off by default; enable it to send transcript confirmation back to the originating chat before agent processing.
@@ -156,7 +156,7 @@ If no proxy env vars are set, direct egress is used. If proxy config is malforme
 
 ## Mention Detection in Groups
 
-When `requireMention: true` is set for a group chat, OpenClaw now transcribes audio **before** checking for mentions. This allows voice notes to be processed even when they contain mentions.
+When `requireMention: true` is set for a group chat, OpenClaw now transcribes audio **before** checking for mentions. This allows voice notes to be processed even when they contain mentions. For full implementation details, config, and troubleshooting, see [Preflight transcription](/nodes/preflight-transcription).
 
 **How it works:**
 
